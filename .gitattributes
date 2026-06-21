@@ -1,0 +1,9 @@
+# Arquivos de texto sempre com LF no repo (scripts/Dockerfile rodam em container Linux;
+# CRLF num .sh quebraria o shebang). Imagens ficam como binário.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.jpg binary
+*.gif binary
+*.svg text eol=lf
