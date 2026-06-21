@@ -1,5 +1,6 @@
-# Ferramentas / config local de agentes — não versionar
+# Ferramentas / notas locais de agentes — não versionar
 .claude/
+.continue/
 
 # Sistema operacional
 .DS_Store
