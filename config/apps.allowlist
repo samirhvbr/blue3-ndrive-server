@@ -1,0 +1,94 @@
+# Blue3 Drive — conjunto fechado de apps (NC34)
+#
+# Como o provision.sh usa este arquivo (ver build/provision.sh, Fase 4):
+#   1. [enable]  → `occ app:enable <id>`  para cada um.
+#   2. [disable] → `occ app:disable <id>` para cada um.
+#   3. [required] NUNCA é tocado (são alwaysEnabled / base do Drive; desligar quebra a instância).
+#   ⚠️ NÃO existe "desliga tudo que não está na lista" — só desligamos o [disable] explícito.
+#
+# Fonte da curadoria: shippedApps + alwaysEnabled de SERVER@v34.0.0:core/shipped.json
+# + apps de download (build/apps.versions). Decisões: PLANO-DE-ACAO §7.
+
+# ─────────────────────────────────────────────────────────────────────
+# [required]  core essencial — NÃO desligar (alwaysEnabled + base do Drive)
+# ─────────────────────────────────────────────────────────────────────
+files
+dav
+files_sharing
+files_trashbin
+files_versions
+theming
+viewer
+settings
+provisioning_api
+oauth2
+profile
+federatedfilesharing
+cloud_federation_api
+lookup_server_connector
+workflowengine
+appstore                 # app que serve a store; a store em si é desligada por config (appstoreenabled=false)
+twofactor_backupcodes
+notifications
+systemtags
+comments
+
+# ─────────────────────────────────────────────────────────────────────
+# [enable]  apps do produto Blue3 Drive (downloads + bundled que usamos)
+# ─────────────────────────────────────────────────────────────────────
+# Produtividade / colaboração (download — build/apps.versions)
+calendar
+contacts
+mail
+notes
+deck
+whiteboard
+# Office: conector + servidor CODE embutido (decisão Collabora = CODE embutido)
+richdocuments
+richdocumentscode
+text                     # bundled
+# Infra / segurança (bundled)
+serverinfo
+twofactor_totp
+bruteforcesettings
+password_policy
+logreader
+privacy
+# Arquivos / extras (bundled)
+activity
+photos
+files_pdfviewer
+files_reminders
+contactsinteraction
+sharebymail
+user_status              # status/emoji do usuário — leve; rever na Fase 3 (enxugar UI)
+dashboard                # decisão de manter/minimizar/desligar fica na Fase 3
+
+# ─────────────────────────────────────────────────────────────────────
+# [disable]  bagunça bundled — desligar (ruído num drive corporativo)
+# ─────────────────────────────────────────────────────────────────────
+firstrunwizard           # popup de boas-vindas
+nextcloud_announcements  # avisos da Nextcloud GmbH
+recommendations          # linha "arquivos recomendados"
+related_resources        # "recursos relacionados"
+survey_client            # telemetria/pesquisa
+support                  # nag de assinatura enterprise
+weather_status           # clima no dashboard
+updatenotification       # aviso de update do core (controlamos por rebuild)
+app_api                  # API de apps externos (ExApps) — não usamos
+user_ldap                # LDAP — não usamos (habilitar só se for integrar AD/LDAP)
+circles                  # Times/Circles — complexidade; deck/files funcionam sem
+files_external           # armazenamento externo — fora do MVP
+admin_audit              # log de auditoria pesado — habilitar sob demanda
+suspicious_login         # detecção ML (precisa treino) — fora do MVP
+webhook_listeners        # webhooks — fora do MVP
+
+# ─────────────────────────────────────────────────────────────────────
+# [deferred]  fora do MVP — não instalados agora (decisão 2026-06-20)
+# ─────────────────────────────────────────────────────────────────────
+# notify_push            # tempo real (push server). Reincluir em [enable] + baixar
+#                        # o tarball (build/apps.versions) + subir o serviço no compose.
+#
+# Nota Collabora: decisão = CODE EMBUTIDO → richdocumentscode (já em [enable]).
+# Sem container externo. O app shipped `office` ("Office overview") não é o CODE
+# server; deixado no estado default (não tocamos).

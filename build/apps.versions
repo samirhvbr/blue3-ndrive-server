@@ -1,0 +1,59 @@
+# Blue3 Drive — manifesto de apps (alvo: Nextcloud 34)
+#
+# Gerado na Fase 0 — 2026-06-20.
+# Fontes (autoritativas, conferem entre si):
+#   - App Store API:  https://apps.nextcloud.com/api/v1/platform/34.0.0/apps.json
+#   - Manifesto core: SERVER@v34.0.0 : core/shipped.json  (56 apps shipped)
+#
+# Core do produto = imagem oficial  nextcloud:34-fpm  (traz os 56 apps "shipped").
+# Este arquivo é o "pin" dos insumos: o build NÃO lê de /DRIVE.
+# Atualizar versão = editar o número aqui e rebuildar.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [download]  apps externos — NÃO vêm na imagem; o Dockerfile baixa o tarball
+#             oficial e extrai em /var/www/html/custom_apps/<app-id>.
+# formato:    <app-id>  <versao>  <url-tarball>
+# ─────────────────────────────────────────────────────────────────────────────
+calendar          6.5.0      https://github.com/nextcloud-releases/calendar/releases/download/v6.5.0/calendar-v6.5.0.tar.gz
+mail              5.10.1     https://github.com/nextcloud-releases/mail/releases/download/v5.10.1/mail-v5.10.1.tar.gz
+notes             6.0.0      https://github.com/nextcloud-releases/notes/releases/download/v6.0.0/notes-v6.0.0.tar.gz
+contacts          8.7.1      https://github.com/nextcloud-releases/contacts/releases/download/v8.7.1/contacts-v8.7.1.tar.gz
+richdocuments     11.0.0     https://github.com/nextcloud-releases/richdocuments/releases/download/v11.0.0/richdocuments-v11.0.0.tar.gz
+richdocumentscode 26.4.104   https://github.com/CollaboraOnline/richdocumentscode/releases/download/26.4.104/richdocumentscode.tar.gz
+deck              1.18.1     https://github.com/nextcloud-releases/deck/releases/download/v1.18.1/deck-v1.18.1.tar.gz
+whiteboard        1.5.9      https://github.com/nextcloud-releases/whiteboard/releases/download/v1.5.9/whiteboard-v1.5.9.tar.gz
+
+# Notas de serviço (ver §8 do PLANO-DE-ACAO):
+#   Collabora: DECIDIDO "CODE embutido" → richdocumentscode (servidor CODE local, x86_64;
+#              p/ ARM usar o app richdocumentscode_arm64). Sem container Collabora externo.
+#              ⚠️ tarball grande (~centenas de MB, traz o binário do CODE).
+#   whiteboard → precisa serviço websocket (Node) separado no compose (ver Fase 4).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [deferred]  fora do MVP — não baixar agora (decisão 2026-06-20)
+# ─────────────────────────────────────────────────────────────────────────────
+# notify_push   1.3.3   https://github.com/nextcloud-releases/notify_push/releases/download/v1.3.3/notify_push-v1.3.3.tar.gz
+#   Tempo real (push server, binário Rust + rota /push no proxy). Sem ele os clientes
+#   fazem polling. Reincluir = mover de volta p/ [download] + subir o serviço no compose.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [bundled]  JÁ vêm em nextcloud:34-fpm — só habilitar (occ app:enable), sem download.
+#            (curados que usamos; o core traz outros 56 no total)
+# ─────────────────────────────────────────────────────────────────────────────
+text                    # editor (par do richdocuments) — shipped
+serverinfo              # painel de sistema — shipped
+twofactor_totp          # 2FA TOTP — shipped (não é app de loja)
+twofactor_backupcodes   # 2FA códigos de backup — shipped
+files                   # base do Drive — shipped
+dav                     # CalDAV/CardDAV — shipped
+theming                 # branding via UI (complementa o tema nativo) — shipped
+viewer                  # preview de mídia — shipped
+# (files_sharing, files_trashbin, files_versions, dashboard, activity, photos… também shipped)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# [out]  fora do MVP (decisão 2026-06-20)
+# ─────────────────────────────────────────────────────────────────────────────
+# tasks    SEM release compatível com NC34 (última tag estável v0.17.1 = NC 31-33;
+#          suporte a 34 só no branch main, ainda sem release → não aparece em
+#          platform/34 da store). FORA DO MVP. Quando o upstream lançar um release
+#          que declare NC34, reincluir = adicionar 1 linha na seção [download].

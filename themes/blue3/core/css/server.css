@@ -1,0 +1,142 @@
+/**
+ * Blue3 Drive — tema "Dark Blue3".
+ *
+ * Base escura inspirada no tema Abyss (VS Code) + accent azul Blue3 #29ABE2.
+ * Paleta e mapeamento de tokens: docs/PLANO-DE-ACAO.md §6.2.
+ *
+ * Como o NC carrega isto: o server.css do tema é adicionado POR CIMA do core
+ * (não substitui) — aqui sobrescrevemos as custom properties --color-* e alguns
+ * seletores legados de header/login.
+ *
+ * ⚠️ 1ª versão — validar num NC34 rodando (Fase 5). O app Theming injeta suas
+ * próprias variáveis; se alguma não pegar, pode ser preciso reforçar via
+ * `occ theming:config` no provision.sh ou subir a especificidade.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only
+ */
+
+/* ===== Paleta Dark Blue3 (custom properties do Nextcloud) ===== */
+:root {
+	/* Accent / marca */
+	--color-primary: #29ABE2;
+	--color-primary-default: #29ABE2;
+	--color-primary-element: #29ABE2;
+	--color-primary-element-hover: #0071BC;
+	--color-primary-hover: #0071BC;
+	--color-primary-text: #ffffff;
+	--color-primary-element-text: #ffffff;
+	--color-primary-light: #10283a;
+	--color-primary-element-light: #10283a;
+
+	/* Fundos (Abyss) */
+	--color-main-background: #000c18;
+	--color-main-background-rgb: 0, 12, 24;
+	--color-main-background-translucent: rgba(0, 12, 24, 0.97);
+	--color-main-background-blur: rgba(38, 38, 65, 0.85);
+	--color-background-dark: #060621;
+	--color-background-darker: #060621;
+	--color-background-hover: #10192c;
+	--color-background-plain: #000c18;
+
+	/* Superfícies / caixas */
+	--color-main-text: #d8e2f0;
+	--color-text-maxcontrast: #6688cc;
+	--color-text-light: #d8e2f0;
+	--color-text-lighter: #6688cc;
+
+	/* Bordas */
+	--color-border: #1c2940;
+	--color-border-dark: #2b3c5d;
+	--color-border-maxcontrast: #406385;
+
+	/* Foco / seleção */
+	--color-box-shadow: rgba(0, 0, 0, 0.5);
+	--color-loading-light: #10192c;
+	--color-loading-dark: #6688cc;
+}
+
+/* Cabeçalho (top bar) — navy escuro, não o azul puro */
+#header {
+	background-color: #10192c;
+}
+
+/* ===== Tela de login ===== */
+#body-login,
+body#body-login {
+	background-color: #000c18;
+	background-image: linear-gradient(160deg, #060621 0%, #000c18 60%, #08286b 140%);
+}
+
+/* Logo branco da Blue3 no header e no login */
+#header .logo,
+#firstrunwizard .logo,
+.logo {
+	background-image: url('../img/logo.png');
+}
+
+/* ===== Botão de ação primária (legado) ===== */
+.primary,
+input[type="submit"].primary,
+input[type="button"].primary,
+button.primary,
+.button.primary {
+	border-color: #29ABE2;
+	background-color: #29ABE2;
+	color: #ffffff;
+}
+
+.primary:hover,
+.primary:focus,
+input[type="submit"].primary:hover,
+input[type="button"].primary:hover,
+button.primary:hover,
+.button.primary:hover {
+	background-color: #0071BC;
+	border-color: #0071BC;
+}
+
+/* =====================================================================
+ * Fase 3 — Enxugar a UI (declutter)
+ *
+ * O grosso da limpeza já vem do apps.allowlist (apps desligados somem de
+ * menu/dashboard/settings). Aqui escondemos só o resíduo que config não tira.
+ *
+ * ⚠️ Seletores de UI mudam entre versões do NC — VALIDAR num NC34 rodando
+ * (Fase 5). Se algo não sumir, ajustar o seletor aqui ou via custom CSS do
+ * app Theming. Nada aqui mexe em Vue/PHP (regra da Fase 3).
+ * ===================================================================== */
+
+/* Tela de login: esconder rodapé de "apps para desktop/mobile" e legais.
+   (o link "criar conta grátis" já cai por simpleSignUpLink.shown=false) */
+#body-login footer .info .entity-name ~ a,
+#body-login p.info a[href*="install"],
+#body-login .legal {
+	display: none !important;
+}
+
+/* Header: esconder o menu de contatos recentes (ícone de pessoas) —
+   ruído num drive simples; os Contatos seguem no app próprio. */
+#header .header-right .contactsmenu {
+	display: none !important;
+}
+
+/* Files: esconder a faixa "Arquivos recomendados" (app recommendations já
+   desligado; reforço caso a faixa venha do core). */
+.recommended-files,
+[data-cy-files-list] .files-list__before .recommended-files {
+	display: none !important;
+}
+
+/* Settings pessoais: esconder a seção "Apps de celular e desktop"
+   (cliente móvel da Blue3 é separado — não promover os clients do NC). */
+.settings-nav a[href$="/settings/user/sync-clients"],
+#sync-clients,
+#clientsbox {
+	display: none !important;
+}
+
+/* Menu do usuário: esconder atalho para a App Store (já trancada por config). */
+#appmenu a[href$="/settings/apps"],
+#expanddiv a[href$="/settings/apps"] {
+	display: none !important;
+}

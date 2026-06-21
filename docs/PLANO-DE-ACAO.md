@@ -23,30 +23,37 @@ Dois problemas a resolver:
 ## 2. Arquitetura de pastas (duas raízes)
 
 ```
-/home/samir/x/DRIVE/         →  Nextcloud ORIGINAL (upstream). NUNCA editar.
-                                 ~50 repos git (core + apps + clientes). Referência/base.
+/home/samir/x/DRIVE/         →  Base de conhecimento TEMPORÁRIA (espelho upstream).
+                                 ~50 repos git p/ estudo/merge único. DESCARTÁVEL — some quando
+                                 terminarmos. NUNCA é fonte de build. Ver §3 (categorias A/B).
 
-/home/samir/x/BLUE3/DRIVE/   →  Camada BLUE3 (o nosso "fork" de verdade).
+/home/samir/x/BLUE3/DRIVE/   →  Camada BLUE3 — único repo que sobrevive.
                                  Só o que é nosso: tema, config, build, docs.
 ```
 
-**Princípio:** o core e os apps ficam puros em `/DRIVE` (cada repo fixado numa tag estável).
-Tudo que é Blue3 vive em `/BLUE3/DRIVE` e é **sobreposto** no build. Assim a atualização do
-Nextcloud continua trivial — nunca damos merge de patch nosso dentro do código upstream.
+**Princípio:** o build **não lê do `/DRIVE`**. Ele parte da **imagem oficial do core**
+(`FROM nextcloud:34-apache` — variante Apache p/ MVP; fpm+nginx é upgrade de produção)
+e **baixa os apps externos por tarball** na versão fixada (§4/§9).
+Tudo que é Blue3 vive em `/BLUE3/DRIVE` e é **sobreposto** por cima. Assim a atualização do
+Nextcloud continua trivial (bump de versão) — nunca damos merge de patch nosso no upstream,
+e o `/DRIVE` pode ser apagado sem afetar o build.
 
 ```
-        /DRIVE (upstream puro, pin v34)              /BLUE3/DRIVE (camada Blue3)
-        ┌───────────────────────────┐               ┌──────────────────────────┐
-        │ SERVER (core)             │               │ themes/blue3/  (marca)    │
-        │ calendar, mail, deck, ... │   + overlay   │ config/        (curadoria)│
-        │ richdocuments, whiteboard │  ───────────► │ build/         (empacotar)│
-        └───────────────────────────┘               │ docs/                     │
-                                                     └──────────────────────────┘
-                          │                                       │
-                          └────────────  BUILD  ─────────────────┘
-                                          │
-                                  Imagem "Blue3 Drive"
-                          (core v34 + apps curados + tema + config)
+   IMAGEM OFICIAL nextcloud:34-apache       /BLUE3/DRIVE (camada Blue3, único repo)
+   ┌───────────────────────────┐           ┌──────────────────────────┐
+   │ core + apps bundled        │           │ themes/blue3/  (marca)    │
+   │ (files, dav, theming…)     │           │ config/        (curadoria)│
+   └───────────────────────────┘  + overlay │ build/         (empacotar)│
+   TARBALLS OFICIAIS (pin NC34)   ─────────► │ docs/                     │
+   ┌───────────────────────────┐           └──────────────────────────┘
+   │ calendar, mail, deck,      │                        │
+   │ richdocuments, whiteboard… │                        │
+   └───────────────────────────┘                        │
+                          │                              │
+                          └──────────  BUILD  ──────────┘
+                                       │
+                               Imagem "Blue3 Drive"
+                       (core v34 + apps curados + tema + config)
 ```
 
 ---
@@ -66,6 +73,22 @@ Não é um projeto único — são **~50 repositórios git independentes** do ec
 > ⚠️ **Importante:** os apps no espelho estão em **versões dev alinhadas ao NC 35**.
 > Ao fixar o core na v34, cada app precisa ir para a **tag compatível com NC 34**
 > (conferir `max-version` do `nextcloud` em cada `appinfo/info.xml`).
+
+### 3.1. Dois papéis — e o `/DRIVE` é descartável
+
+Cada repo do espelho serve a **um** de dois propósitos. Nenhum deles exige manter o `/DRIVE`:
+
+| Papel | Quais | Destino | Entra no `BLUE3/DRIVE`? |
+|---|---|---|---|
+| **A) Insumo do produto** | apps externos curados (§7): `calendar`, `mail`, `tasks`, `notes`, `deck`, `richdocuments`/`text`, `whiteboard`, `contacts`… | build baixa **tarball oficial** na versão fixada | não — só o número da versão fica no `build/` |
+| **B) Base de conhecimento / merge único** | `SERVER` (estudo do tema/`OC_Defaults`), `IOS`, `ANDROID`, `DESKTOP`, `nextcloud.com`, `appstore`, `docs`, `RPI`… | estudar/extrair **uma vez**, depois **descartar** | não — nunca foram daqui |
+
+Notas:
+- O **core (`SERVER`) é categoria B**: o build usa a **imagem oficial** `nextcloud:34-apache` (já traz core
+  + apps bundled). O fonte do `SERVER` serve só pra estudar o mecanismo de tema → descartável.
+- **Clientes móveis (`IOS`/`ANDROID`) ficam de fora.** O `BLUE3/MOBILE` segue **separado** — *não* faremos
+  merge dos clientes Nextcloud nele (custo alto, pouco ganho). Decisão fechada.
+- Quando todo insumo A estiver fixado no `build/` e os repos B estudados/extraídos, **`/DRIVE` pode ser apagado**.
 
 ---
 
@@ -99,28 +122,53 @@ O Nextcloud tem mecanismos **oficiais** de personalização que **não exigem ed
 | Tema | Decisão |
 |---|---|
 | **Modelo** | **Híbrido** — core e apps sempre upstream fixado; forka-se **só um app específico** se/quando precisar mudar o comportamento dele. |
+| **Origem do código** | **Referência + overlay** — **nunca mover** nem **copiar em massa** de `/DRIVE`. Core = **imagem oficial** `nextcloud:34-apache`; apps externos = **tarball oficial** na versão fixada (baixado no build). `/DRIVE` é só estudo e **descartável** (§3.1). Copiar só em 2 casos pontuais: (a) *seed* do tema a partir de `SERVER/themes/example`; (b) fork de **um** app específico. |
+| **Remotes (git)** | **Sem fork global.** `BLUE3/DRIVE` tem **`origin` próprio** (push, é todo nosso) e **nenhum upstream** — não há o que puxar do NC na nossa camada. Core/apps **não têm remote nosso** (vêm por imagem/tarball). O par **`upstream` (pull oficial) + `origin` (push rebrand)** existe **só** dentro de um app que a gente forkar pontualmente. |
 | **Apps** | Files (base) + **Produtividade** + **Office** + **Deck** + **Whiteboard**. **Sem Talk.** |
 | **Visual** | **Branding + enxugar a UI** (não é só logo; também simplificar dashboard/menus). |
+| **Tema** | **Dark Blue3** — escuro por padrão, base **Abyss** (VS Code) + accent azul Blue3 `#29ABE2`. Paleta travada em §6.2. |
 
 ---
 
-## 6. Identidade visual Blue3 (tokens)
+## 6. Identidade visual — "Dark Blue3" (tokens travados)
 
-Extraídos do logo `BLUE3/INTRANET/public/assets/images/logo/logo-blue3.png`:
+**Tema:** **Dark Blue3** — tema **escuro** inspirado no **Abyss** do VS Code (azul-marinho profundo),
+com o **azul Blue3 como accent**. É o visual padrão do produto. (Decisão 2026-06-20.)
 
-| Token | Valor | Uso |
+### 6.1. Strings de marca (`defaults.php`)
+
+| Token | Valor | Onde |
 |---|---|---|
-| **Azul primário** | `#29ABE2` | `--color-primary`, header, links, botões |
-| **Azul escuro** | `#0071BC` | hover, gradientes, acentos |
 | Nome do produto | **Blue3 Drive** | `getName` / `getTitle` |
 | Entidade | **Blue3** | `getEntity` (rodapé/e-mails) |
-| Logo | `logo-blue3.png` / `logo-icon.png` | converter para **SVG** para o tema |
-| Favicon | `favicon.ico` / `favicon.png` | `core/img/favicon.*` |
+| Slogan | **Um local seguro para seus dados!** | `getSlogan` |
+| URL base | **https://drive.blue3.com.br** | `getBaseUrl` |
 
-**Assets de origem:** `BLUE3/INTRANET/public/assets/images/logo/` e `BLUE3/MOBILE/docs/IMGS/`.
+### 6.2. Paleta Dark Blue3 (base Abyss + accent Blue3)
 
-> A converter para SVG (o tema do NC prefere SVG para logo/favicon). Definir também a URL base
-> (`getBaseUrl`) e o slogan.
+Base escura extraída do tema **Abyss** (`theme-abyss/abyss-color-theme.json`); accent da marca Blue3.
+
+| Papel | Hex | Origem | Var. NC (alvo) |
+|---|---|---|---|
+| Fundo principal | `#000c18` | Abyss `editor.background` | `--color-main-background` |
+| Fundo sidebar / app menu | `#060621` | Abyss `sideBar` | `--color-background-dark` |
+| Barras (header / status) | `#10192c` | Abyss `titleBar`/`statusBar` | header/footer |
+| Superfícies (inputs, cards) | `#181f2f` | Abyss `input`/`dropdown` | `--color-background-hover` |
+| Popovers / widgets | `#262641` | Abyss `editorWidget` | `--color-main-background-blur` |
+| **Primário (marca/accent)** | **`#29ABE2`** | **Blue3** | `--color-primary`, links, botões |
+| Primário hover / escuro | `#0071BC` | Blue3 | hover, gradientes |
+| Accent secundário (badges/progress) | `#0063a5` | Abyss `badge` | destaques, notificações |
+| Texto principal | `#d8e2f0` | legibilidade s/ navy | `--color-main-text` |
+| Texto secundário | `#6688cc` | Abyss `editor.foreground` | `--color-text-maxcontrast` |
+| Bordas / foco | `#596f99` | Abyss `focusBorder` | `--color-border`, foco |
+| Divisores / linhas | `#406385` | Abyss `editorLineNumber` | `--color-border-dark` |
+
+### 6.3. Logo e favicon
+
+**Fonte:** `BLUE3/INTRANET/public/assets/images/logo/` (confirmado pelo Samir).
+Disponíveis (PNG/ICO): `logo-blue3.png`, `logo-icon.png`, `logo.png`, `logo_dark.png`, `favicon.ico`, `favicon.png`.
+- Fundo escuro → usar a **variante clara/branca** (conferir `logo_dark.png` x `MOBILE/docs/IMGS/blue3white.png`).
+- **SVG ainda pendente** (só há raster): na Fase 1 decidir entre vetorizar (trace) ou usar PNG no app Theming.
 
 ---
 
@@ -128,84 +176,106 @@ Extraídos do logo `BLUE3/INTRANET/public/assets/images/logo/logo-blue3.png`:
 
 Base sempre presente; demais blocos conforme decisão.
 
+Origem resolvida na Fase 0 (ver [`build/apps.versions`](../build/apps.versions)):
+**bundled** = vem na imagem `nextcloud:34-apache`, só habilitar · **download** = tarball oficial pinado.
+
 | Bloco | app-id | Origem | Notas |
 |---|---|---|---|
-| **Base** | `files`, `files_sharing`, `files_trashbin`, `files_versions`, `dav` | core (`SERVER/apps`) | núcleo do Drive |
-| **Produtividade** | `calendar`, `mail`, `tasks`, `notes` | `/DRIVE` | PHP puro |
-| | `contacts` | **clonar** (`nextcloud/contacts`) | **não está no espelho** |
-| **Office** | `richdocuments` (+ `text`) | `/DRIVE` | **precisa servidor Collabora/CODE** (ver §8) |
-| **Colaboração** | `deck`, `whiteboard` | `/DRIVE` | Whiteboard **precisa serviço websocket** (ver §8) |
-| **Infra (sugestão)** | `notify_push`, `serverinfo`, `twofactor_totp` | `/DRIVE` | notify_push = real-time (binário Rust, opcional) |
+| **Base** | `files`, `files_sharing`, `files_trashbin`, `files_versions`, `dav` | **bundled** | núcleo do Drive |
+| **Produtividade** | `calendar` 6.5.0 · `mail` 5.10.1 · `notes` 6.0.0 | **download** | — |
+| | `contacts` 8.7.1 | **download** | não está no espelho; tarball oficial |
+| | ~~`tasks`~~ | **fora do MVP** | sem release NC34; reincluir quando upstream tagar (§11) |
+| **Office** | `richdocuments` 11.0.0 · `richdocumentscode` 26.4.104 · (+ `text`) | richdocuments/code=**download** · text=**bundled** | Collabora = **CODE embutido** (richdocumentscode); sem container externo (§8) |
+| **Colaboração** | `deck` 1.18.1 · `whiteboard` 1.5.9 | **download** | Whiteboard **precisa serviço websocket** (ver §8) |
+| **Infra** | `serverinfo` · `twofactor_totp` | **bundled** | já vêm na imagem |
+| | ~~`notify_push`~~ | **fora do MVP** | tempo real (push server); polling no MVP (§11) |
 | **Fora** | `spreed` (Talk), `news`, `bookmarks`, `integration_*`, etc. | — | desligados + loja trancada |
 
 ---
 
 ## 8. Notas de empacotamento (gotchas)
 
-- **Collabora (`richdocuments`)** é só o *conector*. Precisa de um **servidor Collabora Online**:
-  o app `office`/CODE embutido **ou** um container Collabora externo. Definir qual. → serviço extra.
-- **Whiteboard** tem `websocket_server/` → exige um **serviço Node separado** (com `docker-compose`
-  próprio no repo). → serviço extra.
-- **notify_push** ("Client Push") precisa de **binário** (push server) para tempo real. Opcional no MVP.
+- **Collabora (`richdocuments`)** é só o *conector*. Decisão = **CODE embutido**: o app
+  **`richdocumentscode`** roda o servidor CODE dentro do próprio container do NC → **sem** container
+  Collabora externo. (x86_64; em ARM usar `richdocumentscode_arm64`. Tarball grande, ~centenas de MB.)
+- **Whiteboard** tem `websocket_server/` → exige um **serviço Node separado** (container próprio). → serviço extra.
+- **notify_push** ("Client Push"): **fora do MVP** → sem serviço de push; clientes em polling.
 - **Banco:** **MariaDB/MySQL** sempre. **Nunca SQLite** (regra do projeto).
-- Resultado: a distribuição é **multi-serviço** → o empacotamento natural é **Docker Compose**
-  (PHP-FPM + MariaDB + Collabora + whiteboard-ws [+ notify_push]). O `ALLinONE` (AIO) serve de base.
+- Resultado (MVP): **Docker Compose** com **app (NC + CODE embutido) + MariaDB + whiteboard-ws**.
+  O `ALLinONE` (AIO) serve de base/referência.
 
 ---
 
 ## 9. Estrutura do /BLUE3/DRIVE (a montar)
 
 ```
-BLUE3/DRIVE/
+BLUE3/DRIVE/                      (estado atual — Fases 0→4 prontas)
 ├── docs/
 │   └── PLANO-DE-ACAO.md          ← este documento
-├── themes/blue3/                 CAMADA DE MARCA (a partir de SERVER/themes/example)
-│   ├── defaults.php              nome "Blue3 Drive", entidade, URL, slogan, logo, cor
+├── themes/blue3/                 ✅ CAMADA DE MARCA "Dark Blue3"
+│   ├── defaults.php              nome/entidade/URL/slogan + cor #29ABE2 + fundo #000c18
 │   └── core/
-│       ├── img/                  logo.svg, logo-icon.svg, favicon.*, fundo de login
-│       └── css/server.css        --color-primary: #29ABE2; etc.
+│       ├── img/                  logo.png (branco), logo-icon.png, favicon.png/.ico
+│       └── css/server.css        paleta Dark Blue3 (--color-*) + declutter da UI
 ├── config/
-│   ├── blue3.config.php          theme=blue3, appstoreenabled=false, defaultapp=files
-│   └── apps.allowlist            lista fechada de app-ids habilitados
+│   ├── blue3.config.php          ✅ theme=blue3, appstoreenabled=false, defaultapp=files, pt_BR
+│   └── apps.allowlist            ✅ required (intocável) / enable / disable
 ├── build/
-│   ├── compose.yml               PHP-FPM + MariaDB + Collabora + whiteboard-ws
-│   ├── Dockerfile                imagem do app (core v34 + apps curados + tema)
-│   └── provision.sh              occ: ativa só a allowlist, aplica theming, tranca a loja
+│   ├── Dockerfile                ✅ FROM nextcloud:34-apache + tarballs + overlay + hook
+│   ├── compose.yml               ✅ app (NC+CODE embutido) + MariaDB + whiteboard
+│   ├── provision.sh              ✅ hook post-installation: allowlist + branding + trancar loja
+│   ├── apps.versions             ✅ pin dos apps (download) + bundled + deferred
+│   ├── .env.example              modelo de segredos (DB, admin, JWT whiteboard)
+│   └── .gitignore                ignora o .env real
 └── README.md
 ```
+
+> **Nada de upstream vive aqui.** O core vem da imagem base; os apps vêm de tarball no `Dockerfile`
+> (versões em `apps.versions`). Atualizar = editar um número em `apps.versions`. O `/DRIVE` não é
+> referenciado pelo build — pode ser apagado (§3.1).
 
 ---
 
 ## 10. Fases do plano
 
 ### Fase 0 — Fundação
-- Inicializar repo git em `/BLUE3/DRIVE`.
-- Fixar `SERVER` em **v34.0.0** (sair do master/v35-dev).
-- Fixar cada app escolhido na **tag compatível com NC 34** (conferir `info.xml`).
-- **Clonar `contacts`** do upstream (não está no espelho).
-- Finalizar tokens de marca: **logo/favicon em SVG**, slogan, URL base.
+- ~~Inicializar repo git em `/BLUE3/DRIVE`~~ ✅ feito (já existe `.git`).
+- ~~Base do build = imagem oficial **`nextcloud:34-apache`**~~ ✅ definido (traz os 56 apps *shipped*).
+- ~~Levantar versão/URL do tarball oficial de cada app curado compatível com NC34~~ ✅ **feito** → [`build/apps.versions`](../build/apps.versions). Fontes: App Store API (`platform/34`) + `SERVER@v34.0.0:core/shipped.json`.
+  - **8 apps por download:** calendar 6.5.0 · mail 5.10.1 · notes 6.0.0 · contacts 8.7.1 · richdocuments 11.0.0 · richdocumentscode 26.4.104 · deck 1.18.1 · whiteboard 1.5.9. *(notify_push movido p/ deferred — §11.)*
+  - **Bundled (vêm na imagem, só habilitar):** text, serverinfo, **twofactor_totp**, twofactor_backupcodes, files, dav, theming, viewer…
+  - **`tasks` fora do MVP:** sem release que declare NC34 (última tag v0.17.1 = NC31-33). Reincluir quando upstream tagar. Ver §11.
+- Finalizar tokens de marca: **logo/favicon em SVG**, slogan, URL base. ← *pendente (precisa de você)*
 
 ### Fase 1 — Marca (tema `themes/blue3/`)  ← primeiro resultado visível
-- Copiar `SERVER/themes/example` → `BLUE3/DRIVE/themes/blue3`.
-- Preencher `defaults.php` (nome, entidade, URL, slogan, logo, cor `#29ABE2`).
-- Colocar logo/favicon/fundo de login em `core/img/`.
-- Sobrescrever variáveis CSS em `core/css/server.css`.
-- Ativar `'theme' => 'blue3'` e complementar pelo app Theming.
+- ~~Semear o tema a partir de `SERVER/themes/example`~~ ✅ estrutura criada em `themes/blue3/`.
+- ~~Preencher `defaults.php`~~ ✅ nome/entidade/URL/slogan + cor `#29ABE2` + fundo navy `#000c18`.
+- ~~Colocar logo/favicon em `core/img/`~~ ✅ `logo.png` (branco, p/ fundo escuro = `MOBILE/.../blue3white.png`), `logo-icon.png`, `favicon.png/.ico`.
+- ~~Sobrescrever variáveis CSS em `core/css/server.css`~~ ✅ paleta Dark Blue3 (custom properties `--color-*` + header/login/botões).
+- **Pendente:** ativar `'theme' => 'blue3'` no `config.php` (vai no `config/blue3.config.php`, Fase 2) e **validar num NC34 rodando** (as `--color-*` precisam vencer as do app Theming — reforçar via `occ theming:config` se preciso). Fase 5.
+- **Pendente (opcional):** logo/favicon em **SVG** (hoje PNG) e **fundo de login** dedicado.
 
 ### Fase 2 — Curadoria ("desbagunçar")
-- Definir `apps.allowlist` (§7); `occ app:disable` em tudo fora dela.
-- `config.php`: `appstoreenabled => false`, `defaultapp => files`.
-- Bloquear instalação/atualização de apps pelo usuário.
+- ~~Definir `apps.allowlist`~~ ✅ [`config/apps.allowlist`](../config/apps.allowlist) — 3 seções: **required** (alwaysEnabled, nunca tocar) · **enable** (nossos) · **disable** (bagunça bundled). Regra segura: liga o `enable`, desliga só o `disable` explícito (nunca "desliga tudo fora da lista").
+- ~~`config.php`: tema + loja + defaultapp~~ ✅ [`config/blue3.config.php`](../config/blue3.config.php): `theme=blue3`, `appstoreenabled=false`, `defaultapp=files`, `updatechecker=false`, `upgrade.disable-web=true`, locale pt_BR/BR.
+- Bloqueio de instalação/update pelo usuário: garantido via `appstoreenabled=false` + `upgrade.disable-web=true` (sem store, sem upgrade web).
+- **Aplicação:** o `provision.sh` (Fase 4) consome a allowlist e roda os `occ app:enable/disable`. ⏳ pendente: app `office` na allowlist depende da decisão Collabora (§11).
 
 ### Fase 3 — Enxugar a UI
-- Dashboard: layout mínimo ou desligar o app `dashboard`.
-- Top bar/menu: esconder ícones de apps que não usamos (CSS do tema + ordem de apps).
-- Settings: ocultar seções desnecessárias.
+- ~~Top bar/menu~~ ✅ já curado pela Fase 2: só os apps do `[enable]` aparecem (os do `[disable]` somem de menu/dashboard/settings). Reforço por CSS no `server.css` (esconder menu de contatos recentes, atalho da store).
+- **Dashboard:** decisão → **manter habilitado, mas Files é o landing** (`defaultapp=files`). Com weather/recommendations já desligados, o dashboard fica "mínimo". Flippável: pra tirar de vez, mover `dashboard` para `[disable]` na allowlist.
+- ~~Settings: ocultar seções~~ ✅ bloco "declutter" no `server.css`: esconde "Apps de celular e desktop" (cliente Blue3 é separado), faixa "recomendados", rodapé de clients no login.
+- **Ordem de apps:** o NC34 guarda a ordem **por usuário** (sem default global limpo via `occ`). Fica na ordem natural do `[enable]`; ajuste fino é per-user. (Não forçamos via fork — regra da Fase 3.)
+- ⚠️ **Validar os seletores CSS num NC34 rodando (Fase 5)** — UI do NC muda entre versões.
 - **Regra:** só CSS/config aqui. Se algo exigir mexer no Vue → vira **fork daquele app** (modelo híbrido).
+- `user_status` (presença) mantido — leve; flippável na allowlist se quiser tirar os indicadores.
 
-### Fase 4 — Empacotamento
-- `build/compose.yml`: PHP-FPM + **MariaDB** + **Collabora/CODE** + **whiteboard-ws** [+ notify_push].
-- `provision.sh` aplica tema + allowlist + config no primeiro boot.
+### Fase 4 — Empacotamento  ✅ (arquivos montados)
+- ~~`build/Dockerfile`~~ ✅ `FROM nextcloud:34-apache` (variante Apache p/ MVP — 1 container web; fpm+nginx fica como upgrade de produção) + baixa os 8 tarballs de `apps.versions` (inclui `richdocumentscode`) + copia `themes/blue3` + `config/blue3.config.php` + instala o hook `provision.sh`.
+- ~~`build/compose.yml`~~ ✅ **app (NC + CODE embutido)** + **MariaDB 11.4** + **whiteboard** (`ghcr.io/nextcloud-releases/whiteboard`). Sem Collabora externo, sem notify_push. Segredos em `build/.env` (`.env.example` versionado; `.env` no `.gitignore`).
+- ~~`build/provision.sh`~~ ✅ hook **post-installation**: parseia `apps.allowlist` (enable/disable, nunca toca required), reforça branding (`occ theming:config`), tranca loja, libera `allow_local_remote_servers` (CODE local), faz wiring do whiteboard. Best-effort (erro de occ não derruba o boot). Parser e sintaxe validados.
+- ✅ Build só com imagem + tarballs (sem tocar `/DRIVE`) → `/DRIVE` pode ser apagado.
+- ⏳ **Falta rodar de fato** (precisa de Docker) — isso é a Fase 5.
 
 ### Fase 5 — Validação & docs
 - Subir local, conferir: marca aplicada, set de apps correto, **loja trancada**.
@@ -215,12 +285,13 @@ BLUE3/DRIVE/
 
 ## 11. Pendências / decisões em aberto
 
-- [ ] **Collabora:** CODE embutido (`office`) ou servidor Collabora externo?
-- [ ] **notify_push** entra no MVP (tempo real) ou fica para depois?
-- [ ] Confirmar **azul primário** `#29ABE2` como cor oficial (extraído do logo).
-- [ ] Converter logo/favicon Blue3 para **SVG**.
-- [ ] Definir **URL base** e **slogan** da Blue3 Drive.
-- [ ] Confirmar tags exatas (v34) de cada app na Fase 0.
+- [x] ~~**Collabora:**~~ ✅ **CODE embutido** → app `richdocumentscode` v26.4.104 (x86_64; ARM = `richdocumentscode_arm64`). Sem container Collabora externo. (`office` shipped ≠ CODE server; não tocado.)
+- [x] ~~**notify_push** no MVP?~~ ✅ **Fora do MVP** (clientes em polling). Em `[deferred]` no `apps.versions`/`apps.allowlist`.
+- [x] ~~Confirmar cor / tema~~ ✅ **Dark Blue3** (base Abyss + accent `#29ABE2`); paleta em §6.2.
+- [x] ~~Definir URL base e slogan~~ ✅ URL `https://drive.blue3.com.br` · slogan "Um local seguro para seus dados!".
+- [ ] Converter logo/favicon Blue3 para **SVG** (só há PNG) — ou usar PNG via Theming. Decidir na Fase 1.
+- [x] ~~Levantar versão/URL do tarball (compatível v34) de cada app → `build/apps.versions`~~ ✅ (Fase 0).
+- [x] ~~**`tasks`:** decidido **fora do MVP**~~ (sem release NC34). Reincluir quando upstream tagar uma versão que declare NC34.
 
 ---
 

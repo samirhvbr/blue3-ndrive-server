@@ -1,0 +1,72 @@
+# Blue3 Drive — stack MVP (Docker Compose).
+#
+#   app        Nextcloud 34 + apps curados + tema Dark Blue3 + CODE embutido (richdocumentscode)
+#   db         MariaDB (regra do projeto: nunca SQLite)
+#   whiteboard servidor websocket do quadro branco (serviço separado)
+#
+# Segredos/parâmetros vêm do .env (copie de .env.example). NÃO comite o .env real.
+# Subir (a partir de BLUE3/DRIVE):
+#   docker compose -f build/compose.yml --env-file build/.env up -d --build
+#
+# Ver docs/PLANO-DE-ACAO.md Fase 4/5.
+name: blue3-drive
+
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    command: --transaction-isolation=READ-COMMITTED --log-bin=binlog --binlog-format=ROW
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?defina no .env}
+      MARIADB_DATABASE: ${MYSQL_DATABASE:-blue3drive}
+      MARIADB_USER: ${MYSQL_USER:-blue3}
+      MARIADB_PASSWORD: ${MYSQL_PASSWORD:?defina no .env}
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build:
+      context: ..
+      dockerfile: build/Dockerfile
+    image: blue3-drive:34
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${APP_PORT:-8080}:80"
+    environment:
+      # Conexão com o banco (devem casar com as credenciais do serviço db)
+      MYSQL_HOST: db
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-blue3drive}
+      MYSQL_USER: ${MYSQL_USER:-blue3}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?defina no .env}
+      # Admin inicial + domínios confiáveis (auto-install no 1º boot)
+      NEXTCLOUD_ADMIN_USER: ${NEXTCLOUD_ADMIN_USER:-admin}
+      NEXTCLOUD_ADMIN_PASSWORD: ${NEXTCLOUD_ADMIN_PASSWORD:?defina no .env}
+      NEXTCLOUD_TRUSTED_DOMAINS: ${NEXTCLOUD_TRUSTED_DOMAINS:-localhost app}
+      # Repassados ao provision.sh p/ o wiring do whiteboard
+      WHITEBOARD_JWT_SECRET: ${WHITEBOARD_JWT_SECRET:?defina no .env}
+      WHITEBOARD_PUBLIC_URL: ${WHITEBOARD_PUBLIC_URL:-http://localhost:3002}
+    volumes:
+      - nextcloud:/var/www/html
+
+  whiteboard:
+    image: ghcr.io/nextcloud-releases/whiteboard:stable   # pinar p/ versão compat. c/ app 1.5.9 (Fase 5)
+    restart: unless-stopped
+    ports:
+      - "${WHITEBOARD_PORT:-3002}:3002"
+    environment:
+      # URL interna do NC na rede do compose (server-to-server)
+      NEXTCLOUD_URL: ${WHITEBOARD_NEXTCLOUD_URL:-http://app}
+      JWT_SECRET_KEY: ${WHITEBOARD_JWT_SECRET:?defina no .env}
+      BACKUP_DIR: /tmp/backup
+
+volumes:
+  db:
+  nextcloud:
