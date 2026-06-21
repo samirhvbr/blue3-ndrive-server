@@ -1,7 +1,7 @@
 # Blue3 Drive — Onde Paramos (handoff)
 
-> **Atualizado:** 2026-06-20 · **Versão:** v0.1.0 · **Branch:** `master` (sincronizado com o GitHub)
-> **Repo:** https://github.com/samirhvbr/BLUE3_DRIVE · **Último commit:** `79d3333`
+> **Atualizado:** 2026-06-21 · **Versão:** v0.1.1 · **Branch:** `master` (sincronizado com o GitHub)
+> **Repo:** https://github.com/samirhvbr/BLUE3_DRIVE
 >
 > **Spec viva (LEIA PRIMEIRO ao retomar):** [docs/PLANO-DE-ACAO.md](../docs/PLANO-DE-ACAO.md) — arquitetura,
 > decisões travadas e fases estão lá, marcadas ✅/⏳. Este arquivo é só o "snapshot de retomada".
@@ -73,11 +73,16 @@ docker compose -f build/compose.yml --env-file build/.env up -d --build
 - [ ] **Office:** abrir um `.docx` → CODE embutido conecta (validar WOPI).
 - [ ] **Whiteboard:** criar quadro → conecta no serviço `:3002`.
 
-### ⚠️ Incertezas conhecidas (ajustar ao rodar — `provision.sh` é tolerante, não derruba o boot)
-- **Chaves do `occ theming:config`** podem ter mudado no NC34 (ex.: `color` vs `primary_color`). Conferir.
+### ✅ De-riscado offline em v0.1.1 (verificado contra o fonte do NC34 em /DRIVE/SERVER)
+- **Chaves do `occ theming:config`** conferidas: `color` é **deprecado** → trocado por `primary_color`;
+  adicionado `background_color #000c18`; chaves de imagem `logo`/`favicon` confirmadas (caminho absoluto).
+- **Imagem do whiteboard** pinada em **`:v1.5.9`** (casa com o app) — confirmado que a tag existe no GHCR.
+
+### ⚠️ Ainda exige validação ao vivo (Docker — `provision.sh` é tolerante, não derruba o boot)
 - **Seletores CSS de declutter** em `server.css` mudam entre versões do NC — conferir e ajustar.
-- **Imagem do whiteboard** está em `:stable` — pinar a uma versão compatível com o app 1.5.9.
-- **`occ theming:config logo`** espera caminho de arquivo; conferir se importou o logo certo.
+- **CODE embutido (WOPI):** richdocuments deve auto-detectar o `richdocumentscode` (+ `allow_local_remote_servers`
+  já setado). Confirmar abrindo um `.docx`.
+- **Import do logo:** conferir se `occ theming:config logo` importou o arquivo certo (header/login).
 
 ---
 

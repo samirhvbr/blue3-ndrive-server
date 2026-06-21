@@ -46,10 +46,14 @@ for app in $(section disable); do
 done
 
 # 3) Branding via app Theming (reforça o tema nativo themes/blue3).
+#    Chaves conferidas no fonte do NC34 (apps/theming UpdateConfig::SUPPORTED_KEYS):
+#    name,url,imprintUrl,privacyUrl,slogan,color(DEPRECADO),primary_color,background_color,
+#    disable-user-theming + imagens (background,logo,logoheader,favicon — caminho absoluto).
 occ theming:config name "Blue3 Drive"
 occ theming:config slogan "Um local seguro para seus dados!"
 occ theming:config url "https://drive.blue3.com.br"
-occ theming:config color "#29ABE2"
+occ theming:config primary_color "#29ABE2"
+occ theming:config background_color "#000c18"
 occ theming:config logo    /var/www/html/themes/blue3/core/img/logo.png
 occ theming:config favicon /var/www/html/themes/blue3/core/img/favicon.png
 

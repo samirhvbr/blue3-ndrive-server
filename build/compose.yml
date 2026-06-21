@@ -57,7 +57,7 @@ services:
       - nextcloud:/var/www/html
 
   whiteboard:
-    image: ghcr.io/nextcloud-releases/whiteboard:stable   # pinar p/ versão compat. c/ app 1.5.9 (Fase 5)
+    image: ghcr.io/nextcloud-releases/whiteboard:v1.5.9   # casa com o app whiteboard 1.5.9
     restart: unless-stopped
     ports:
       - "${WHITEBOARD_PORT:-3002}:3002"
