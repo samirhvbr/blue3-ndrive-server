@@ -1,0 +1,9 @@
+# Ferramentas / config local de agentes — não versionar
+.claude/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Segredos do compose (reforço; build/.gitignore também cobre)
+build/.env
