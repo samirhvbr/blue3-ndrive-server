@@ -1,6 +1,8 @@
-# Ferramentas / notas locais de agentes — não versionar
+# Config local de ferramenta de agente — não versionar
 .claude/
-.continue/
+
+# OBS: .continue/ É versionado de propósito — handoff de contexto entre
+# máquinas (casa / escritório / notebook). Não ignorar.
 
 # Sistema operacional
 .DS_Store
