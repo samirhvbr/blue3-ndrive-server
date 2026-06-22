@@ -57,6 +57,13 @@ occ theming:config background_color "#000c18"
 occ theming:config logo    /var/www/html/themes/blue3/core/img/logo.png
 occ theming:config favicon /var/www/html/themes/blue3/core/img/favicon.png
 
+# 3b) Workaround bug do core NC34: ThemingController::getManifest() lê a chave
+#     'cachebuster' como string (getAppValueString), mas o app Theming a grava
+#     como int → AppConfigTypeConflictException (HTTP 500) ao montar o manifest,
+#     quebrando viewer/Office e a reatividade do Files. Removemos a chave após
+#     setar o tema (getManifest cai no default). Corrigido no core a partir do NC35.
+occ config:app:delete theming cachebuster
+
 # 4) Trancar loja / landing (reforço — o blue3.config.php já cobre).
 occ config:system:set appstoreenabled --type=boolean --value=false
 occ config:system:set defaultapp --value="files"
