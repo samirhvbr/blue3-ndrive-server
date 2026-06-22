@@ -39,6 +39,18 @@ COPY --chown=www-data:www-data config/blue3.config.php /usr/src/nextcloud/config
 # allowlist consumida pelo provision.sh (fica na imagem, fora do volume)
 COPY config/apps.allowlist /usr/src/blue3/apps.allowlist
 
+# ── Skeleton Blue3: arquivos iniciais de cada usuário novo ──
+# Diretório inicial enxuto: Documents/Photos vazios (exemplos ficam só em
+# Modelos/Templates), sem material de marca Nextcloud, e Readme rebrandado.
+# Atua no skeleton do core; entra no volume no 1º boot junto com o resto.
+COPY --chown=www-data:www-data build/skeleton/Readme.md /usr/src/nextcloud/core/skeleton/Readme.md
+RUN set -eux; \
+	SK=/usr/src/nextcloud/core/skeleton; \
+	find "$SK" -maxdepth 1 -type f \( -iname 'Nextcloud*' -o -iname 'Reasons to use*' \) -delete; \
+	find "$SK/Documents" -mindepth 1 -delete 2>/dev/null || true; \
+	find "$SK/Photos"    -mindepth 1 -delete 2>/dev/null || true; \
+	chown -R www-data:www-data "$SK"
+
 # ── Provisionamento de 1º boot (hook oficial post-installation) ──
 COPY build/provision.sh /docker-entrypoint-hooks.d/post-installation/10-blue3.sh
 RUN chmod +x /docker-entrypoint-hooks.d/post-installation/10-blue3.sh
