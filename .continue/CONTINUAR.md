@@ -45,16 +45,17 @@ Fase 5 — Validação ⏳  (maioria OK; Office pendente)
 - **Embutido (`richdocumentscode`) NÃO abre.** Além do cachebuster (resolvido), o `richdocuments`
   falha ao parsear o discovery: `Call to a member function xpath() on false` em `WOPI/Parser.php:42`.
   A imagem `nextcloud:34-apache` é a **34.0.0** (release .0 de 2026-06-16; bugs estão nela; sem 34.0.1 ainda).
-- **Tentativa Collabora separado (em andamento):**
-  - `build/compose.yml` (working tree **dirty**): serviço `collabora` (collabora/code:latest) +
+- **Tentativa Collabora separado (em andamento) — na branch `office-collabora` (pushed):**
+  - `build/compose.yml` (na branch): serviço `collabora` (collabora/code:latest) +
     `extra_hosts: host.docker.internal:host-gateway` no `app` e no `collabora`.
   - Ao vivo via `occ`: `richdocumentscode` **disabled**; `richdocuments wopi_url=http://host.docker.internal:9980`;
     `overwrite.cli.url=http://host.docker.internal:8081`; `trusted_domains += host.docker.internal[:8081]`.
   - `/etc/hosts`: `127.0.0.1 host.docker.internal`. **Acesso mudou p/ `http://host.docker.internal:8081`.**
   - **Resultado:** discovery NC→Collabora = **HTTP 200** (avançou — o embutido falhava aqui). MAS o
     `.docx` **ainda trava no "Carregando"** (provável WOPISrc/WebSocket Collabora→NC ou o token).
-- **Retomar:** abrir doc em `host.docker.internal:8081` → `docker logs --tail 40 blue3-drive-collabora-1`
-  + `occ log:tail 15`; checar WOPISrc/WS. Se resolver: bakear as configs `occ` no `provision.sh`,
+- **Retomar:** `git checkout office-collabora` (traz o compose do Collabora) → abrir doc em
+  `host.docker.internal:8081` → `docker logs --tail 40 blue3-drive-collabora-1` + `occ log:tail 15`;
+  checar WOPISrc/WS. Se resolver: bakear as configs `occ` no `provision.sh`,
   **remover `richdocumentscode` do build** (Dockerfile + apps.versions + allowlist — slim ~300 MB),
   atualizar `.env.example`/`compose.yml`, fechar a **decisão §8** (embutido → separado), bump **0.2.0**.
 
@@ -66,7 +67,7 @@ Fase 5 — Validação ⏳  (maioria OK; Office pendente)
 ## Commits desta sessão (no `master`)
 - `0.1.2` ×3: pt-BR · Deep Space (login+pós-login) · Skeleton Blue3.
 - `0.1.3`: fix do cachebuster (500 do Theming) + este handoff.
-- **NÃO commitado:** `build/compose.yml` (serviço Collabora — WIP do Office).
+- **Branch `office-collabora`** (pushed, fora do master): `build/compose.yml` com o serviço Collabora — WIP do Office (`git checkout office-collabora` p/ retomar).
 
 ---
 
