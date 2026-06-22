@@ -1,7 +1,8 @@
 # Blue3 Drive — stack MVP (Docker Compose).
 #
-#   app        Nextcloud 34 + apps curados + tema Dark Blue3 + CODE embutido (richdocumentscode)
+#   app        Nextcloud 34 + apps curados + tema Dark Blue3
 #   db         MariaDB (regra do projeto: nunca SQLite)
+#   collabora  servidor Collabora/CODE (Office) em container separado
 #   whiteboard servidor websocket do quadro branco (serviço separado)
 #
 # Segredos/parâmetros vêm do .env (copie de .env.example). NÃO comite o .env real.
@@ -55,6 +56,10 @@ services:
       WHITEBOARD_PUBLIC_URL: ${WHITEBOARD_PUBLIC_URL:-http://localhost:3002}
     volumes:
       - nextcloud:/var/www/html
+    extra_hosts:
+      # host.docker.internal → host: o NC alcança o Collabora e responde a WOPISrc
+      # no MESMO nome que o navegador usa (requisito do WOPI; ver docs §8).
+      - "host.docker.internal:host-gateway"
 
   whiteboard:
     image: ghcr.io/nextcloud-releases/whiteboard:v1.5.9   # casa com o app whiteboard 1.5.9
@@ -66,6 +71,23 @@ services:
       NEXTCLOUD_URL: ${WHITEBOARD_NEXTCLOUD_URL:-http://app}
       JWT_SECRET_KEY: ${WHITEBOARD_JWT_SECRET:?defina no .env}
       BACKUP_DIR: /tmp/backup
+
+  collabora:
+    image: collabora/code:latest          # CODE (Collabora Online) — servidor de Office. TODO: pinar após validar.
+    restart: unless-stopped
+    cap_add: [MKNOD, SYS_CHROOT, SYS_ADMIN]
+    environment:
+      # NC autorizado a usar este Collabora (WOPI) — mesmo host que o navegador usa
+      aliasgroup1: ${COLLABORA_ALIASGROUP:-http://host.docker.internal:8081}
+      # nome público do Collabora (roteamento WebSocket)
+      server_name: ${COLLABORA_SERVER_NAME:-host.docker.internal:9980}
+      # HTTP puro local (sem SSL próprio nem proxy SSL na frente)
+      extra_params: --o:ssl.enable=false --o:ssl.termination=false
+      DONT_GEN_SSL_CERT: "1"
+    ports:
+      - "${COLLABORA_PORT:-9980}:9980"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   db:
