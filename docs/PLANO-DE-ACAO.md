@@ -277,9 +277,15 @@ BLUE3/DRIVE/                      (estado atual — Fases 0→4 prontas)
 - ✅ Build só com imagem + tarballs (sem tocar `/DRIVE`) → `/DRIVE` pode ser apagado.
 - ⏳ **Falta rodar de fato** (precisa de Docker) — isso é a Fase 5.
 
-### Fase 5 — Validação & docs
-- Subir local, conferir: marca aplicada, set de apps correto, **loja trancada**.
-- Atualizar `README.md` da Blue3 Drive.
+### Fase 5 — Validação & docs  ⏳ (em validação ao vivo — 2026-06-22)
+- ✅ Stack sobe local (compose; porta **8081** — 8080 ocupada no host). Marca, **idioma pt-BR**,
+  curadoria de apps e **loja trancada** conferidos via `occ`.
+- ✅ **Whiteboard** valida (serviço `:3002`). ✅ Tema **"Deep Space"** (login + pós-login, 100% CSS).
+- ✅ Bug de core NC34 contornado: `theming/cachebuster` (500 no `getManifest`/manifest) — `provision.sh §3b`.
+- ⏳ **Office (CODE):** o **embutido** (`richdocumentscode`) NÃO abre na imagem **34.0.0** (richdocuments
+  falha ao parsear o discovery — `WOPI/Parser.php:42`). **Em migração p/ Collabora em container separado**
+  (WIP) — **reabre a decisão §8**. Detalhes/retomada em [.continue/CONTINUAR.md](../.continue/CONTINUAR.md).
+- ⏳ Pendente: CSS declutter ao vivo, skeleton em rebuild, `README.md`.
 
 ---
 
