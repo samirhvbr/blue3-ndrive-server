@@ -32,6 +32,10 @@ $CONFIG = [
 	'simpleSignUpLink.shown' => false,
 
 	// ── Localização (produto BR) ────────────────────────────────────
+	// pt-BR é o PADRÃO (default_*), mas o seletor de idioma fica disponível:
+	// quem quiser troca para EN no perfil. O admin nasce em pt-BR via provision.sh
+	// (1º boot) — senão herdaria o idioma do navegador. NÃO usamos force_language:
+	// ele travaria todo mundo em pt-BR e removeria o seletor. Decisão Fase 5.
 	'default_language' => 'pt_BR',
 	'default_locale' => 'pt_BR',
 	'default_phone_region' => 'BR',

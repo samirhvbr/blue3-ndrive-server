@@ -61,6 +61,14 @@ occ theming:config favicon /var/www/html/themes/blue3/core/img/favicon.png
 occ config:system:set appstoreenabled --type=boolean --value=false
 occ config:system:set defaultapp --value="files"
 
+# 4b) Admin nasce em pt-BR (idioma + locale). O default_language cobre quem tem
+#     navegador pt-BR; isto garante o admin do install, que senão herdaria o
+#     idioma do navegador. O seletor de idioma continua disponível — não forçamos.
+if [ -n "${NEXTCLOUD_ADMIN_USER:-}" ]; then
+	occ user:setting "$NEXTCLOUD_ADMIN_USER" core lang   pt_BR
+	occ user:setting "$NEXTCLOUD_ADMIN_USER" core locale pt_BR
+fi
+
 # 5) Office: CODE embutido (richdocumentscode roda local em 127.0.0.1:9980).
 #    Permite o NC falar com servidores locais (necessário p/ o CODE embutido).
 occ config:system:set allow_local_remote_servers --type=boolean --value=true
