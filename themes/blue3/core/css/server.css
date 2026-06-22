@@ -60,11 +60,84 @@
 	background-color: #10192c;
 }
 
-/* ===== Tela de login ===== */
+/* ===== Fundo "Deep Space Blue3" — login E pós-login =====
+ * Fundo espacial 100% CSS: campo de estrelas + nebulosa no ciano da marca,
+ * sem imagem externa (à prova de update; sem asset de terceiros / sem depender
+ * do /DRIVE). Inspirado na vibe "espaço" do tema AREA81, mantendo a cor #29ABE2.
+ * Os tokens abaixo são reusados no login e nos corpos pós-login (sem duplicar). */
+:root {
+	--blue3-space-image:
+		/* estrelas — 6 camadas em escalas incomensuráveis p/ parecer aleatório */
+		radial-gradient(1.5px 1.5px at 30px 40px,   rgba(255,255,255,.95), transparent),
+		radial-gradient(1.2px 1.2px at 160px 120px, rgba(214,226,240,.75), transparent),
+		radial-gradient(1px 1px     at 90px 210px,  rgba(255,255,255,.55), transparent),
+		radial-gradient(1.4px 1.4px at 250px 70px,  rgba(190,225,255,.70), transparent),
+		radial-gradient(1px 1px     at 205px 270px, rgba(255,255,255,.50), transparent),
+		radial-gradient(1.2px 1.2px at 60px 320px,  rgba(255,255,255,.62), transparent),
+		/* nebulosa / "galáxia" — brilhos ciano e azul Blue3 */
+		radial-gradient(ellipse 70% 50% at 80% 16%, rgba(41,171,226,.16), transparent 60%),
+		radial-gradient(ellipse 85% 60% at 12% 88%, rgba(0,113,188,.22),  transparent 62%),
+		radial-gradient(ellipse 45% 24% at 62% 56%, rgba(120,170,255,.10), transparent 70%),
+		/* base — espaço profundo */
+		radial-gradient(ellipse at 50% 36%, #06183c 0%, #000c18 55%, #00030c 100%);
+	--blue3-space-size:
+		250px 250px, 300px 300px, 350px 350px, 280px 280px, 330px 330px, 380px 380px,
+		100% 100%, 100% 100%, 100% 100%, 100% 100%;
+	--blue3-space-repeat:
+		repeat, repeat, repeat, repeat, repeat, repeat,
+		no-repeat, no-repeat, no-repeat, no-repeat;
+}
+
+/* Tela de login */
 #body-login,
 body#body-login {
-	background-color: #000c18;
-	background-image: linear-gradient(160deg, #060621 0%, #000c18 60%, #08286b 140%);
+	background-color: #000414;
+	background-image: var(--blue3-space-image);
+	background-size: var(--blue3-space-size);
+	background-repeat: var(--blue3-space-repeat);
+	background-position: center;
+	background-attachment: fixed;
+}
+
+/* Pós-login — dashboard, apps, settings e páginas públicas: o MESMO espaço.
+ * 'body#...' + !important p/ vencer a ilustração padrão (blobs) que o app
+ * Theming injeta via var(--image-background). ⚠️ ids confirmados na Fase 5. */
+body#body-user,
+body#body-settings,
+body#body-public {
+	--image-background: none !important;   /* mata o blob onde o core o referencia */
+	background-color: #000414 !important;
+	background-image: var(--blue3-space-image) !important;
+	background-size: var(--blue3-space-size) !important;
+	background-repeat: var(--blue3-space-repeat) !important;
+	background-position: center !important;
+	background-attachment: fixed !important;
+}
+
+/* Dashboard: remover a ilustração própria p/ deixar o espaço do corpo aparecer. */
+#app-dashboard,
+.app-dashboard {
+	background-image: none !important;
+}
+
+/* Caixa de login — vidro fosco com leve brilho ciano da marca */
+#body-login .guest-box {
+	background: rgba(7, 18, 40, 0.64) !important;
+	border: 1px solid rgba(41, 171, 226, .30);
+	border-radius: 16px;
+	-webkit-backdrop-filter: blur(14px);
+	backdrop-filter: blur(14px);
+	box-shadow:
+		0 10px 50px rgba(0, 0, 0, .55),
+		0 0 70px rgba(41, 171, 226, .10),
+		inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+/* Logo flutua sobre o espaço (sem caixa de fundo no login) */
+#body-login #header,
+#body-login header {
+	background: transparent !important;
+	box-shadow: none !important;
 }
 
 /* Logo branco da Blue3 no header e no login */
