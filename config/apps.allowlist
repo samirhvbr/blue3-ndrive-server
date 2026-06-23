@@ -82,6 +82,7 @@ files_external           # armazenamento externo — fora do MVP
 admin_audit              # log de auditoria pesado — habilitar sob demanda
 suspicious_login         # detecção ML (precisa treino) — fora do MVP
 webhook_listeners        # webhooks — fora do MVP
+federation               # federação NC↔NC (servidores confiáveis) — Drive corporativo único não federa; o protocolo (federatedfilesharing/cloud_federation_api) fica em [required]
 
 # ─────────────────────────────────────────────────────────────────────
 # [deferred]  fora do MVP — não instalados agora (decisão 2026-06-20)
