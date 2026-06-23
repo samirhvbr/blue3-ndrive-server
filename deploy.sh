@@ -23,7 +23,12 @@ set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   # raiz do repo (onde está este script)
 BRANCH="${DEPLOY_BRANCH:-master}"
 ENV_FILE="$DIR/build/.env"
-COMPOSE=(docker compose -f "$DIR/build/compose.yml" --env-file "$ENV_FILE")
+# Overlay opcional (ex.: produção). Lido do .env: DEPLOY_COMPOSE_OVERLAY=build/compose.prod.yml
+OVERLAY=""
+[ -f "$ENV_FILE" ] && OVERLAY=$({ grep -E '^DEPLOY_COMPOSE_OVERLAY=' "$ENV_FILE" 2>/dev/null || true; } | head -1 | cut -d= -f2- | tr -d '"')
+COMPOSE=(docker compose -f "$DIR/build/compose.yml")
+[ -n "$OVERLAY" ] && COMPOSE+=(-f "$DIR/$OVERLAY")
+COMPOSE+=(--env-file "$ENV_FILE")
 APP_SVC="app"
 LOCK="/tmp/blue3-drive-deploy.lock"
 

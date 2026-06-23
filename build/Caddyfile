@@ -1,0 +1,32 @@
+# Blue3 Drive — Caddy (proxy reverso + HTTPS automático).
+# Os hosts vêm do .env (passados como env ao serviço caddy no compose.prod.yml).
+# Caddy obtém e renova certificados Let's Encrypt sozinho — os domínios PRECISAM
+# resolver para o IP do VPS ANTES de subir (senão o ACME falha).
+
+{
+	email {$ACME_EMAIL}
+}
+
+# ── Nextcloud (Blue3 Drive) ──
+{$NEXTCLOUD_PUBLIC_HOST} {
+	reverse_proxy app:80
+
+	# Redirects exigidos pelo Nextcloud (service discovery).
+	redir /.well-known/carddav   /remote.php/dav 301
+	redir /.well-known/caldav    /remote.php/dav 301
+	redir /.well-known/webfinger /index.php/.well-known/webfinger 301
+	redir /.well-known/nodeinfo  /index.php/.well-known/nodeinfo 301
+
+	header Strict-Transport-Security "max-age=15768000; includeSubDomains"
+	encode zstd gzip
+}
+
+# ── Collabora / CODE (Office) ──
+{$COLLABORA_PUBLIC_HOST} {
+	reverse_proxy collabora:9980
+}
+
+# ── Whiteboard (servidor websocket) ──
+{$WHITEBOARD_PUBLIC_HOST} {
+	reverse_proxy whiteboard:3002
+}

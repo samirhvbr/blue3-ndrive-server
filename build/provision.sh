@@ -76,11 +76,23 @@ if [ -n "${NEXTCLOUD_ADMIN_USER:-}" ]; then
 	occ user:setting "$NEXTCLOUD_ADMIN_USER" core locale pt_BR
 fi
 
-# 5) Office: CODE embutido (richdocumentscode roda local em 127.0.0.1:9980).
-#    Permite o NC falar com servidores locais (necessário p/ o CODE embutido).
+# 5) Office + URLs públicas — modo definido por env (mesmo código serve dev e prod):
+#    - COLLABORA_PUBLIC_URL setado → Collabora EXTERNO (container separado, ex.: prod):
+#      desliga o richdocumentscode embutido e aponta o richdocuments p/ ele.
+#    - vazio → CODE EMBUTIDO (richdocumentscode local, ex.: dev).
 occ config:system:set allow_local_remote_servers --type=boolean --value=true
-#    richdocuments auto-detecta o richdocumentscode quando ambos ligados.
-#    ⚠️ validar a conexão WOPI na Fase 5 (subir doc e abrir).
+if [ -n "${COLLABORA_PUBLIC_URL:-}" ]; then
+	log "Office: Collabora externo em ${COLLABORA_PUBLIC_URL}"
+	occ app:disable richdocumentscode
+	occ config:app:set richdocuments wopi_url --value="$COLLABORA_PUBLIC_URL"
+else
+	log "Office: CODE embutido (richdocumentscode)"
+fi
+#    URL pública do NC (WOPISrc, links de e-mail) + proxy reverso (prod com Caddy).
+[ -n "${NEXTCLOUD_PUBLIC_URL:-}" ]         && occ config:system:set overwrite.cli.url   --value="$NEXTCLOUD_PUBLIC_URL"
+[ -n "${NEXTCLOUD_OVERWRITE_PROTOCOL:-}" ] && occ config:system:set overwriteprotocol    --value="$NEXTCLOUD_OVERWRITE_PROTOCOL"
+[ -n "${NEXTCLOUD_OVERWRITE_HOST:-}" ]     && occ config:system:set overwritehost         --value="$NEXTCLOUD_OVERWRITE_HOST"
+[ -n "${NEXTCLOUD_TRUSTED_PROXIES:-}" ]    && occ config:system:set trusted_proxies 0     --value="$NEXTCLOUD_TRUSTED_PROXIES"
 
 # 6) Whiteboard: apontar p/ o serviço websocket (segredo via env do compose).
 if [ -n "${WHITEBOARD_JWT_SECRET:-}" ]; then

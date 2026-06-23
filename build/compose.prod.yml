@@ -1,0 +1,71 @@
+# Blue3 Drive — overlay de PRODUÇÃO (VPS com HTTPS).
+#
+# Uso (a partir da raiz BLUE3/DRIVE):
+#   docker compose -f build/compose.yml -f build/compose.prod.yml --env-file build/.env up -d --build
+# ou, mais simples, via deploy.sh com  DEPLOY_COMPOSE_OVERLAY=build/compose.prod.yml  no .env.
+#
+# Acrescenta à stack base (compose.yml):
+#   caddy      proxy reverso com HTTPS automático (Let's Encrypt) — a borda
+#   collabora  servidor Collabora/CODE (Office) em office.<domínio>
+# e ajusta app/whiteboard p/ rodarem ATRÁS do Caddy (sem porta exposta, URLs https).
+#
+# Requer Docker Compose >= 2.24 (usa o tag !reset p/ limpar as portas do dev).
+# Ver docs/DEPLOY.md.
+
+services:
+  app:
+    # No dev o app publica em :8080; em produção quem publica é o Caddy.
+    ports: !reset []
+    environment:
+      # Domínio público (DNS → VPS). Sem esquema aqui, só o host.
+      NEXTCLOUD_TRUSTED_DOMAINS: "${NEXTCLOUD_PUBLIC_HOST:?defina o host publico, ex. drive.blue3.com.br}"
+      # Repassados ao provision.sh (overwrite + Collabora externo):
+      NEXTCLOUD_PUBLIC_URL: "https://${NEXTCLOUD_PUBLIC_HOST}"
+      NEXTCLOUD_OVERWRITE_PROTOCOL: "https"
+      NEXTCLOUD_OVERWRITE_HOST: "${NEXTCLOUD_PUBLIC_HOST}"
+      NEXTCLOUD_TRUSTED_PROXIES: "${NEXTCLOUD_TRUSTED_PROXIES:-172.16.0.0/12}"
+      COLLABORA_PUBLIC_URL: "https://${COLLABORA_PUBLIC_HOST:?defina o host do Collabora, ex. office.blue3.com.br}"
+
+  whiteboard:
+    ports: !reset []
+    environment:
+      WHITEBOARD_PUBLIC_URL: "https://${WHITEBOARD_PUBLIC_HOST:?defina o host do whiteboard, ex. whiteboard.blue3.com.br}"
+
+  collabora:
+    image: "${COLLABORA_IMAGE:-collabora/code:latest}"   # PINAR uma versão estável em produção
+    restart: unless-stopped
+    cap_add: [MKNOD, SYS_CHROOT, SYS_ADMIN]
+    environment:
+      # NC(s) autorizado(s) a usar este Collabora (WOPI)
+      aliasgroup1: "https://${NEXTCLOUD_PUBLIC_HOST}"
+      server_name: "${COLLABORA_PUBLIC_HOST}"
+      # Atrás do Caddy (que termina o TLS): Collabora serve HTTP mas sabe que a borda é HTTPS
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=true"
+      DONT_GEN_SSL_CERT: "1"
+    expose:
+      - "9980"           # só na rede interna; o Caddy publica via office.<domínio>
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"    # HTTP/3
+    volumes:
+      - ./build/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      NEXTCLOUD_PUBLIC_HOST: "${NEXTCLOUD_PUBLIC_HOST:?}"
+      COLLABORA_PUBLIC_HOST: "${COLLABORA_PUBLIC_HOST:?}"
+      WHITEBOARD_PUBLIC_HOST: "${WHITEBOARD_PUBLIC_HOST:?}"
+      ACME_EMAIL: "${ACME_EMAIL:?defina um e-mail para o Lets Encrypt}"
+    depends_on:
+      - app
+      - collabora
+      - whiteboard
+
+volumes:
+  caddy_data:
+  caddy_config:
