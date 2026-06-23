@@ -10,3 +10,6 @@ Thumbs.db
 
 # Segredos do compose (reforço; build/.gitignore também cobre)
 build/.env
+
+# Claude Code — config local da sessao
+.claude/settings.local.json
