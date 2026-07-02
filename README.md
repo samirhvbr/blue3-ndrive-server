@@ -1,68 +1,68 @@
 # Blue3 Drive
 
-> Distribuição do **Nextcloud 34** com a cara da **Blue3**, enxuta e curada.
-> Documentação interna — versionar é obrigatório; publicar é opcional.
-> Sempre commit com boa descrição no formato `versão - comentário`.
+> A **Nextcloud 34** distribution with the **Blue3** look, lean and curated.
+> Internal documentation — versioning is mandatory; publishing is optional.
+> Always commit with a good description in the `version - comment` format.
 
-**Ver também:** [docs/PLANO-DE-ACAO.md](docs/PLANO-DE-ACAO.md) (spec viva — arquitetura, decisões, fases) ·
-[CLAUDE.md](CLAUDE.md) (convenções de código e do agente) ·
-[SECURITY_GUIDELINES.md](SECURITY_GUIDELINES.md) (segurança — sempre revisar).
+**See also:** [docs/PLANO-DE-ACAO.md](docs/PLANO-DE-ACAO.md) (living spec — architecture, decisions, phases) ·
+[CLAUDE.md](CLAUDE.md) (code and agent conventions) ·
+[SECURITY_GUIDELINES.md](SECURITY_GUIDELINES.md) (security — always review).
 
-## O que é
+## What it is
 
-Uma **camada Blue3 sobre o Nextcloud**, montada por **overlay** (sem patch no core):
+A **Blue3 layer on top of Nextcloud**, assembled via **overlay** (no core patching):
 
-- **Marca** — tema nativo "Dark Blue3" (base Abyss do VS Code + azul Blue3 `#29ABE2`).
-- **Enxuta** — conjunto fechado de apps; App Store trancada; UI desbagunçada.
-- **Atualizável** — core = imagem oficial; apps = tarball pinado. Atualizar = bump de versão + rebuild.
+- **Brand** — native "Dark Blue3" theme (VS Code's Abyss base + Blue3 blue `#29ABE2`).
+- **Lean** — a closed set of apps; App Store locked; decluttered UI.
+- **Upgradable** — core = official image; apps = pinned tarball. Upgrade = version bump + rebuild.
 
-O espelho upstream em `/home/samir/x/DRIVE` é só **referência de estudo e descartável** — o build
-não depende dele.
+The upstream mirror at `/home/samir/x/DRIVE` is only a **disposable study reference** — the build
+does not depend on it.
 
-## Estrutura
+## Structure
 
-| Caminho | O quê |
+| Path | What |
 |---|---|
-| `docs/PLANO-DE-ACAO.md` | spec viva (arquitetura, decisões travadas, fases 0→5) |
-| `themes/blue3/` | tema "Dark Blue3" (`defaults.php`, `core/css/server.css`, `core/img/`) |
-| `config/blue3.config.php` | overlay de config (`theme=blue3`, loja trancada, `defaultapp=files`, pt_BR) |
-| `config/apps.allowlist` | conjunto fechado: `required` (intocável) / `enable` / `disable` |
-| `build/Dockerfile` | `FROM nextcloud:34-apache` + tarballs dos apps + overlay + hook |
-| `build/compose.yml` | stack: app (NC + CODE embutido) + MariaDB + whiteboard |
-| `build/provision.sh` | hook de 1º boot: allowlist + branding + trancar loja |
-| `build/apps.versions` | pin dos apps (download/bundled/deferred) |
-| `build/.env.example` | modelo de segredos (o `.env` real **não** é versionado) |
+| `docs/PLANO-DE-ACAO.md` | living spec (architecture, locked decisions, phases 0→5) |
+| `themes/blue3/` | "Dark Blue3" theme (`defaults.php`, `core/css/server.css`, `core/img/`) |
+| `config/blue3.config.php` | config overlay (`theme=blue3`, locked store, `defaultapp=files`, pt_BR) |
+| `config/apps.allowlist` | closed set: `required` (untouchable) / `enable` / `disable` |
+| `build/Dockerfile` | `FROM nextcloud:34-apache` + app tarballs + overlay + hook |
+| `build/compose.yml` | stack: app (NC + embedded CODE) + MariaDB + whiteboard |
+| `build/provision.sh` | first-boot hook: allowlist + branding + lock the store |
+| `build/apps.versions` | app pins (download/bundled/deferred) |
+| `build/.env.example` | secrets template (the real `.env` is **not** versioned) |
 
-## Como subir (local)
+## How to bring it up (local)
 
-A partir desta pasta:
+From this folder:
 
 ```bash
-cp build/.env.example build/.env        # preencha senhas + WHITEBOARD_JWT_SECRET
+cp build/.env.example build/.env        # fill in passwords + WHITEBOARD_JWT_SECRET
 docker compose -f build/compose.yml --env-file build/.env up -d --build
 ```
 
-Acesse `http://localhost:8080` (admin = `NEXTCLOUD_ADMIN_USER`/`_PASSWORD` do `.env`).
-O 1º boot instala o NC e roda o `provision.sh`. Build manual da imagem: `docker build -f build/Dockerfile -t blue3-drive:34 .`
+Access `http://localhost:8080` (admin = `NEXTCLOUD_ADMIN_USER`/`_PASSWORD` from `.env`).
+The first boot installs NC and runs `provision.sh`. Manual image build: `docker build -f build/Dockerfile -t blue3-drive:34 .`
 
-## Como atualizar um app
+## How to update an app
 
-1. Confira a versão compatível com **NC34** (App Store `platform/34` ou `info.xml`).
-2. Atualize a linha em `build/apps.versions` **e** o `fetch` correspondente no `build/Dockerfile`.
-3. Bumpe `version.md` (`Z+1`) e rebuilde (`deploy.sh` ou `up -d --build`).
+1. Check the version compatible with **NC34** (App Store `platform/34` or `info.xml`).
+2. Update the line in `build/apps.versions` **and** the corresponding `fetch` in the `build/Dockerfile`.
+3. Bump `version.md` (`Z+1`) and rebuild (`deploy.sh` or `up -d --build`).
 
-Atualizar o **core**: troque a tag da imagem base (`nextcloud:34-…`) — só dentro do mesmo major sem revisar.
+Updating the **core**: swap the base image tag (`nextcloud:34-…`) — only within the same major without review.
 
-## Versionamento e commits
+## Versioning and commits
 
-`version.md` (`X.Y.Z`) é a versão do produto. Commits usam `versão - comentário`
-(ex.: `0.1.1 - Atualiza calendar 6.5.0 → 6.5.1`). Regras de bump em [CLAUDE.md](CLAUDE.md).
+`version.md` (`X.Y.Z`) is the product version. Commits use `version - comment`
+(e.g., `0.1.1 - Atualiza calendar 6.5.0 → 6.5.1`). Bump rules in [CLAUDE.md](CLAUDE.md).
 
 ## Git
 
-Repo: `origin` → GitHub (`samirhvbr/BLUE3_DRIVE`). Fluxo: `add` → `commit` → `push` (HTTPS, sem scp).
-Segredos (`.env`) nunca entram no git — ver `build/.gitignore` e `.gitattributes` (LF nos scripts).
+Repo: `origin` → GitHub (`samirhvbr/BLUE3_DRIVE`). Flow: `add` → `commit` → `push` (HTTPS, no scp).
+Secrets (`.env`) never enter git — see `build/.gitignore` and `.gitattributes` (LF in scripts).
 
 ---
 
-**Responsável:** Samir Hanna Verza · **Empresa:** Blue3
+**Maintainer:** Samir Hanna Verza · **Company:** Blue3
