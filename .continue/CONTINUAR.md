@@ -7,6 +7,40 @@
 
 ---
 
+
+> ## ⏸️ ADIADO por decisão, não esquecido — 24/08/2026
+>
+> **Samir em 24/08:** *"ndrive — documenta o que temos que fazer em `.continue` e vamos
+> deixar para depois."* O documento abaixo continua **válido e detalhado**; não foi
+> reescrito. O que segue são só os fatos que mudaram desde 22/06.
+>
+> **Nada andou.** A branch `office-collabora` está intocada desde **22/06** (`72f4f9a`,
+> *"WIP: Office via Collabora separado (NAO validado)"*). O `master` andou uma vez, em
+> **30/07**, só para entrar no rollout do COMMITTER.
+>
+> ### ⚠️ Armadilha para quem retomar
+>
+> A branch foi criada **antes** de 30/07, então **não tem** o rollout do COMMITTER que o
+> `master` ganhou. O diff entre as duas mostra **9 arquivos**, e a maioria não é do
+> Collabora — são `.committer.yml`, `AGENTS.md`, `CLAUDE.md`, `README.md`, `README_br.md`.
+>
+> ```console
+> $ git rev-list --count master..origin/office-collabora   # 1  (o WIP)
+> $ git diff --name-only master origin/office-collabora    # 9  (a maioria, doc do master)
+> ```
+>
+> **Traga o `master` para a branch antes de retomar** (`git merge master`), senão o próximo
+> commit lá desfaz a doc de agente e o marcador do COMMITTER sem ninguém perceber — e o
+> repo sai do ciclo da skill em silêncio.
+>
+> ### O que continua sendo a pergunta
+>
+> Retomar o Office/Collabora ou **congelar o projeto**? O trabalho parou a um passo
+> identificado (discovery já responde **HTTP 200**; o `.docx` trava em "Carregando",
+> provável WOPISrc/WebSocket ou token) — é um bom lugar para retomar, e um lugar honesto
+> para congelar.
+
+
 ## TL;DR
 
 A stack **roda local** (Docker) e a **Fase 5 está quase fechada**: marca, idioma, curadoria e
