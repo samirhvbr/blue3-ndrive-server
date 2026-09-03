@@ -1,4 +1,4 @@
-# Blue3 Drive — Agent Guide
+# CLAUDE.md — Blue3 Drive: guia de agentes
 
 Este documento orienta agentes de IA (Claude Code, etc.) que trabalham no projeto **Blue3 Drive**:
 uma **distribuição do Nextcloud** com a cara da Blue3 e enxuta, montada por **camadas** (sem patch
@@ -8,16 +8,18 @@ no core). Siga estas diretrizes para manter consistência, qualidade e seguranç
 > — arquitetura, decisões travadas e fases estão lá. Em divergência de versões de app, use
 > [build/apps.versions](build/apps.versions). Segurança: [SECURITY_GUIDELINES.md](SECURITY_GUIDELINES.md).
 >
-> [AGENTS.md](AGENTS.md) é só um ponteiro para este arquivo.
+> `CLAUDE.md` e `AGENTS.md` são o mesmo documento abaixo do H1 (ADR-007 do repodocs):
+> editar um é editar o outro.
 
 ---
 
 ## Comunicação
 
 - **Idioma:** Português (pt-BR) para mensagens ao operador, comentários de código, descrições e textos de UI.
-- **Commits:** formato obrigatório `versão - comentário` (ex.: `0.1.1 - Atualiza calendar para 6.5.1`).
-  A versão vem do `version.md`; faça o bump **no mesmo commit** da mudança. Mensagem em português,
-  descritiva o suficiente para pesquisa futura (o **porquê** + o **o quê**).
+- **Commits:** formato obrigatório `versão - descrição` (ex.: `0.1.1 - update calendar to 6.5.1`).
+  A versão vem do `version.md`; faça o bump **no mesmo commit** da mudança. **Mensagem em inglês
+  (US)**, como todo conteúdo de repositório (ADR-014 do repodocs), descritiva o suficiente para
+  pesquisa futura (o **porquê** + o **o quê**).
   - **Vários commits, uma só versão (OK):** uma entrega pode ser dividida em commits por **assunto**
     com a **mesma versão** (ex.: dois `0.1.7 - ...`). O bump do `version.md` vai em **um** deles
     (o primeiro) e os demais repetem a versão no título, sem novo bump. Dois commits com a mesma
