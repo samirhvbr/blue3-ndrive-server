@@ -13,6 +13,19 @@ não se reescreve.
 > reconstruí-las agora produziria uma história plausível, não uma verdadeira.
 
 
+## 0.1.17 - os blocos de eco são regenerados a partir do repodocs
+
+As regras marcadas de `CLAUDE.md` e `AGENTS.md` são reescritas a partir da
+fonte única em [samirhvbr/repodocs](https://github.com/samirhvbr/repodocs):
+`QUEUE-RULE`, `RELEASES-RULE`, `LANGUAGE-RULE`, `COMMIT-RULE` e `CICD-RULE`.
+Bloco é substituído por inteiro entre os marcadores, cabeçalho incluído — é isso
+que faz uma edição local não sobreviver e não confundir a próxima leitura.
+
+O `QUEUE-RULE` é novo e chega pela primeira vez: a `.continue/` guarda trabalho
+que ainda não existe, e um documento só sai dela quando a coisa que ele descreve
+**existe**. Tamanho, idioma e desalinho não são condição de saída. **Nunca
+esvazie essa pasta como arrumação.**
+
 ## 0.1.16 - os hooks de git são regenerados a partir do repodocs
 
 Os dois hooks do padrão são reescritos a partir do repodocs, e o
