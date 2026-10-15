@@ -1,5 +1,9 @@
 # Blue3 Drive — Diretrizes de Segurança
 
+> Estas são diretrizes e requisitos; não uma certificação de implementação. A
+> [revisão de 15/10/2026](docs/REVISAO-20261015.md) distingue controles presentes,
+> portas publicadas, falhas toleradas e operação ainda não comprovada.
+
 **Versão:** 1.0
 **Data:** 2026-06-20
 **Base:** adaptado das diretrizes da Blue3 Intranet (v1.1) para o contexto **Blue3 Drive** (Nextcloud 34 em Docker, modelo em camadas).
@@ -31,9 +35,9 @@ Toda decisão passa primeiro pelo filtro de segurança. Não "deixar para depois
 | **Atacante externo (Internet)** | Brute-force no login, scan, upload malicioso, abuso de link público | App **bruteforcesettings** ligado, **2FA** (twofactor_totp), HTTPS+HSTS na borda, `trusted_domains` restrito, limites de upload |
 | **Ex-funcionário com credenciais residuais** | Sessão antiga, **app password** (WebDAV/cliente) não revogada, link compartilhado ativo | `occ user:disable`, revogar app-passwords e sessões, expirar/limpar shares |
 | **Usuário com excesso de permissão** | Vira admin, instala app, muda config | Poucos admins; **loja trancada** (`appstoreenabled=false`) + `upgrade.disable-web=true`; grupos com escopo |
-| **Supply chain** | Imagem base, tarball de app ou imagem do whiteboard comprometidos | Pinning em `build/apps.versions`; baixar **só de fontes oficiais** (nextcloud-releases, CollaboraOnline, apps.nextcloud.com); imagem base oficial; manter atualizado; (ideal) checksum/assinatura |
-| **Erro humano em deploy/operação** | Expor `.env` (JWT, senha admin/DB), subir com SQLite, `trusted_domains` aberto | `.env` fora do git; **MariaDB sempre**; deploy idempotente (`deploy.sh`); revisar config antes de subir |
-| **Serviços auxiliares (CODE embutido, whiteboard, DB)** | Segredo JWT fraco/vazado, porta interna exposta, server-to-server abusado | Segredo JWT forte e secreto; portas internas **não** publicadas no host; `allow_local_remote_servers` só para o CODE local |
+| **Supply chain** | Imagem base, tarball de app ou imagem do whiteboard comprometidos | Versões de apps fixas no Dockerfile, espelhadas manualmente em `build/apps.versions`; fontes oficiais; manter atualizado; checksum/assinatura e digest ainda pendentes |
+| **Erro humano em deploy/operação** | Expor `.env` (JWT, senha admin/DB), subir com SQLite, `trusted_domains` aberto | `.env` fora do git; MariaDB configurado no compose; revisar config, backup e resultado de cada etapa do deploy; o script não fornece recuperação transacional |
+| **Serviços auxiliares (CODE embutido, whiteboard, DB)** | Segredo JWT fraco/vazado, porta interna exposta, server-to-server abusado | Segredo JWT forte e secreto; bind/ingress/firewall a definir: o compose atual publica app e whiteboard no host; `allow_local_remote_servers` só para o CODE local |
 
 Ao desenhar/alterar algo, pergunte: **qual desses atores tem incentivo e capacidade de atacar este fluxo, e como ele é barrado?**
 
@@ -72,17 +76,17 @@ A segurança aqui é **configuração**, não código. Garantir:
 - **`.env` nunca é commitado.** Está no `build/.gitignore`. `.env.example` é a verdade das chaves, com placeholders.
 - **Gerar segredos fortes:** ex. `WHITEBOARD_JWT_SECRET`, senhas → `openssl rand -hex 32`. Nada de senha óbvia/placeholder em produção.
 - **Segredos que existem aqui:** senha do admin inicial, senha do MariaDB (user + root), `WHITEBOARD_JWT_SECRET`. Todos só no `.env`/ambiente — nunca em código, log, mensagem de erro ou commit.
-- **Rotação:** trocar o JWT do whiteboard / senha do admin é recriar o `.env` + recriar o serviço. Documentar incidente quando rotar por suspeita.
+- **Rotação:** alterar apenas o `.env` não troca as credenciais de contas já criadas. Atualizar a senha efetiva no Nextcloud/MariaDB pelo procedimento próprio do serviço e sincronizar os consumidores. O JWT exige concordância entre a configuração efetiva do app e o serviço whiteboard; o hook atual é pós-instalação. Testar a rotação em ambiente isolado e documentar incidente quando houver suspeita.
 - **`occ config:system:get`** pode expor segredo no terminal — não colar saída em chat/issue.
 
 ---
 
 ## 6. Imagem e Dependências (supply chain)
 
-- **Pinning:** toda versão de app fica fixa em `build/apps.versions` (e na linha `fetch` do Dockerfile). Nada de "latest" para apps.
+- **Pinning:** os downloads usam as versões fixas nas linhas `fetch` do Dockerfile; `build/apps.versions` é um registro manual e não é lido pelo build. Conferir a paridade dos dois arquivos. A imagem base ainda usa uma tag por major, sem digest.
 - **Fontes oficiais apenas:** `github.com/nextcloud-releases/*`, `github.com/CollaboraOnline/*`, `apps.nextcloud.com`, imagem base `nextcloud:34-*` oficial, whiteboard `ghcr.io/nextcloud-releases/whiteboard`.
 - **Manter atualizado:** CVE `high`/`critical` em NC core, num app curado, no MariaDB ou na imagem do whiteboard **força** bump de versão + rebuild. Acompanhar os advisories do Nextcloud.
-- **(Ideal)** verificar checksum/assinatura dos tarballs no build; pinar a imagem do whiteboard por versão/digest (hoje `:stable`).
+- **(Ideal)** verificar checksum/assinatura dos tarballs no build; pinar a imagem do whiteboard por versão/digest (hoje `:v1.5.9` no compose; sem digest).
 - **Compatibilidade NC34:** novo app só entra na versão cujo `max-version` cobre o 34 (App Store `platform/34`).
 
 ---
@@ -119,7 +123,7 @@ O Drive armazena arquivos e dados pessoais de usuários. Princípios:
 
 1. **Conter:** `occ maintenance:mode --on`. Se for usuário comprometido, `occ user:disable <uid>` primeiro.
 2. **Revogar:** sessões e **app-passwords** do(s) usuário(s); invalidar links compartilhados suspeitos.
-3. **Rotar segredos:** JWT do whiteboard, senha do admin, senha do MariaDB → recriar `.env` + recriar serviços. (Trocar credencial do DB exige atualizar o NC.)
+3. **Rotar segredos:** trocar as credenciais efetivas do admin/MariaDB e atualizar os consumidores; sincronizar o JWT do whiteboard nos dois lados. Recriar o `.env` e os containers, isoladamente, não altera contas persistidas. Seguir a seção 5 e validar o procedimento antes de reabrir o serviço.
 4. **Snapshot:** dump do MariaDB + cópia do volume `data/` no momento do incidente, guardados à parte (não sobrescrever backups normais).
 5. **Examinar logs:** `nextcloud.log`, `admin_audit` (se ligado), logs do proxy/apache — logins fora de hora, ações admin inesperadas, scan.
 6. **Comunicar:** notificar Samir Hanna Verza. PII de terceiro vazada → avaliar ANPD (LGPD art. 48).

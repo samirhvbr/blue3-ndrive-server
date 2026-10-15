@@ -1,6 +1,8 @@
 # Blue3 Drive — Plano de Ação
 
-> **Status:** planejamento (nada implementado ainda)
+> **Status:** plano original com registros de implementação/validação de junho de 2026.
+> A frase anterior “nada implementado” estava desatualizada: os overlays e o empacotamento existem.
+> A [operação atual](OPERACAO.md) descreve a fonte; registros de produção não foram renovados.
 > **Data:** 2026-06-20
 > **Base:** Nextcloud **v34** (linha estável) — o espelho hoje está em v35.0.0 *dev*
 > **Marca:** azul Blue3 `#29ABE2` (primário) · `#0071BC` (escuro)
@@ -291,7 +293,7 @@ BLUE3/DRIVE/                      (estado atual — Fases 0→4 prontas)
 
 ## 11. Pendências / decisões em aberto
 
-- [x] ~~**Collabora:**~~ ✅ **CODE embutido** → app `richdocumentscode` v26.4.104 (x86_64; ARM = `richdocumentscode_arm64`). Sem container Collabora externo. (`office` shipped ≠ CODE server; não tocado.)
+- [ ] **Collabora: decisão reaberta pelo registro de 22/06 (Fase 5); fonte ainda com CODE embutido.** Decisão inicial: **CODE embutido** → app `richdocumentscode` v26.4.104 (x86_64; ARM = `richdocumentscode_arm64`). Sem container Collabora externo. (`office` shipped ≠ CODE server; não tocado.)
 - [x] ~~**notify_push** no MVP?~~ ✅ **Fora do MVP** (clientes em polling). Em `[deferred]` no `apps.versions`/`apps.allowlist`.
 - [x] ~~Confirmar cor / tema~~ ✅ **Dark Blue3** (base Abyss + accent `#29ABE2`); paleta em §6.2.
 - [x] ~~Definir URL base e slogan~~ ✅ URL `https://drive.blue3.com.br` · slogan "Um local seguro para seus dados!".

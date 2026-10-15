@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.18 - Documenta o empacotamento e a operação real do Drive
+
+Atualiza mapa de componentes, instalação/configuração, persistência, curadoria e limites de deploy/Office. Corrige contradições de planejamento/portas e registra decisões sem alterar Docker, scripts, temas ou configurações.
+
 Entradas no formato da mensagem de commit (`versão - descrição curta em
 português`), mais recente no topo. **Cada cabeçalho `##` é literalmente o
 assunto do commit** — a entrada é escrita *antes* do commit, para que a frase

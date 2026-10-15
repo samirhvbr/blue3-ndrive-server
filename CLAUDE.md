@@ -17,8 +17,8 @@ no core). Siga estas diretrizes para manter consistência, qualidade e seguranç
 
 - **Idioma:** Português (pt-BR) para mensagens ao operador, comentários de código, descrições e textos de UI.
 - **Commits:** formato obrigatório `versão - descrição` (ex.: `0.1.1 - update calendar to 6.5.1`).
-  A versão vem do `version.md`; faça o bump **no mesmo commit** da mudança. **Mensagem em inglês
-  (US)**, como todo conteúdo de repositório (ADR-014 do repodocs), descritiva o suficiente para
+  A versão vem do `version.md`; faça o bump **no mesmo commit** da mudança. **Mensagem em português**, conforme a exceção atual dos repositórios internos
+  Blue3 (bloco de idioma abaixo), descritiva o suficiente para
   pesquisa futura (o **porquê** + o **o quê**).
   - **Vários commits, uma só versão (OK):** uma entrega pode ser dividida em commits por **assunto**
     com a **mesma versão** (ex.: dois `0.1.7 - ...`). O bump do `version.md` vai em **um** deles
