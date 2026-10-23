@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.19 - Preserve provisioning arguments when running occ as www-data
+
+Pass occ arguments as positional shell parameters through su, preserving names,
+slogans, color values, administrator names, and whiteboard configuration. Failure
+warnings identify the occ command without printing its configuration values.
+The hook remains best-effort. Isolated regression tests exercise the root and
+non-root paths and verify the actual arguments passed to PHP.
+
 ## 0.1.18 - Documenta o empacotamento e a operação real do Drive
 
 Atualiza mapa de componentes, instalação/configuração, persistência, curadoria e limites de deploy/Office. Corrige contradições de planejamento/portas e registra decisões sem alterar Docker, scripts, temas ou configurações.

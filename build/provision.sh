@@ -12,12 +12,12 @@ set -u
 ALLOWLIST="/usr/src/blue3/apps.allowlist"
 log() { echo "[blue3-provision] $*"; }
 
-# Executa occ como www-data (o entrypoint roda hooks como root) e tolera falha.
+# Preserve argument boundaries through su and keep failed settings out of logs.
 occ() {
 	if [ "$(id -u)" = "0" ]; then
-		su -p -s /bin/sh www-data -c "php /var/www/html/occ $*" || log "WARN: falhou: occ $*"
+		su -p -s /bin/sh www-data -c 'php /var/www/html/occ "$@"' -- sh "$@" || log "WARN: falhou: occ ${1:-unknown}"
 	else
-		php /var/www/html/occ "$@" || log "WARN: falhou: occ $*"
+		php /var/www/html/occ "$@" || log "WARN: falhou: occ ${1:-unknown}"
 	fi
 }
 
