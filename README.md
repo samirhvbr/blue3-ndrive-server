@@ -62,6 +62,10 @@ linhas `fetch` do Dockerfile; o manifesto não é lido automaticamente pelo buil
 O core e o MariaDB usam tags por linha de versão, sem digest. Rebuild não equivale
 à prova de que um volume existente recebeu o overlay, nem à validação do Office.
 
+Run `python3 -m unittest discover -s tests -v` to check provisioning argument
+handling and best-effort failure logging with synthetic values and local command
+stubs. These checks do not start Nextcloud, a database, or containers.
+
 `deploy.sh` faz fetch/fast-forward, recria a stack e tenta upgrade/repair; seu
 tratamento de falha não restaura imagem, banco ou volume. Consulte os limites
 antes de utilizá-lo. Esta revisão não iniciou containers, executou deploy,
